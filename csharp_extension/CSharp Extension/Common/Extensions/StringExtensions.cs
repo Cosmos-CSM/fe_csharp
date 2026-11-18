@@ -1,12 +1,23 @@
-﻿namespace CSharp_Extension.Common.Extensions;
+﻿using System.Text.RegularExpressions;
+
+namespace CSharp_Extension.Common.Extensions;
 
 /// <summary>
 ///     Extends <see cref="string"/> class.
 /// </summary>
-public static class StringExtensions {
+public static partial class StringExtensions {
+
+    /// <summary>
+    /// Find Tokens in the given string using a regex pattern.
+    /// </summary>
+    /// <returns></returns>
+    [GeneratedRegex(@"\{[^{}]+\}")]
+    private static partial Regex TokenRegex();
 
     /// <summary>
     ///     Replaces tokens in the given <paramref name="text"/> with the corresponding values from the <paramref name="replacements"/> dictionary.
+    ///     Regex pattern used to identify tokens is defined in the <see cref="TokenRegex"/> method, preventing replacement values from 
+    ///     being rescanned and replaced again if they match the token pattern.
     /// </summary>
     /// <param name="text"> The text in which to replace tokens. </param>
     /// <param name="replacements"> A dictionary containing the tokens and their corresponding replacement values. </param>
@@ -21,14 +32,15 @@ public static class StringExtensions {
             if (string.IsNullOrEmpty(replacement.Key))
                 continue;
 
-            text = text.Replace(
-                replacement.Key,
-                replacement.Value ?? string.Empty,
-                StringComparison.OrdinalIgnoreCase);
+            return TokenRegex().Replace(text, match => {
+                    return replacements.TryGetValue(
+                        match.Value,
+                        out string? value)
+                        ? value ?? string.Empty
+                        : match.Value;
+                });
         }
 
         return text;
     }
-
-   
 }
